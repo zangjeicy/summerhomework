@@ -1,0 +1,4 @@
+interface:
+  display_name: "Blog Writer"
+  short_description: "Write and improve RuyiBookCourse blog posts."
+  default_prompt: "Use this skill to write or optimize a blog post for RuyiBookCourse."

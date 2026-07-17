@@ -1,0 +1,76 @@
+[
+  {
+    "path": "/",
+    "id": "home",
+    "name": "首页分析",
+    "screenshot": "01_首页分析.png",
+    "ready": { "kind": "placeholder", "value": "输入股票代码或名称，如 600519、贵州茅台、AAPL" }
+  },
+  {
+    "path": "/chat",
+    "id": "chat",
+    "name": "AI问股",
+    "screenshot": "02_AI问股.png",
+    "ready": { "kind": "testId", "value": "chat-workspace" }
+  },
+  {
+    "path": "/portfolio",
+    "id": "portfolio",
+    "name": "投资组合",
+    "screenshot": "03_投资组合.png",
+    "ready": { "kind": "heading", "value": "持仓管理" }
+  },
+  {
+    "path": "/decision-signals",
+    "id": "decision-signals",
+    "name": "决策信号",
+    "screenshot": "04_决策信号.png",
+    "ready": { "kind": "heading", "value": "AI 建议" }
+  },
+  {
+    "path": "/screening",
+    "id": "screening",
+    "name": "智能选股",
+    "screenshot": "05_智能选股.png",
+    "ready": { "kind": "heading", "value": "AlphaSift 选股" }
+  },
+  {
+    "path": "/backtest",
+    "id": "backtest",
+    "name": "历史回测",
+    "screenshot": "06_历史回测.png",
+    "allowedApiResponses": [
+      { "path": "/api/v1/backtest/performance", "statuses": [404] }
+    ],
+    "ready": { "kind": "placeholder", "value": "按股票代码筛选（留空表示全部）" }
+  },
+  {
+    "path": "/alerts",
+    "id": "alerts",
+    "name": "告警中心",
+    "screenshot": "07_告警中心.png",
+    "ready": { "kind": "heading", "value": "告警中心" }
+  },
+  {
+    "path": "/usage",
+    "id": "usage",
+    "name": "Token用量",
+    "screenshot": "08_Token用量.png",
+    "ready": { "kind": "heading", "value": "Token 用量监控" }
+  },
+  {
+    "path": "/settings",
+    "id": "settings",
+    "name": "系统设置",
+    "screenshot": "09_系统设置.png",
+    "ready": { "kind": "heading", "value": "系统设置" }
+  },
+  {
+    "path": "/login",
+    "id": "login",
+    "name": "登录与访问控制",
+    "screenshot": "10_登录与访问控制.png",
+    "mode": "mocked-login",
+    "ready": { "kind": "css", "value": "#password" }
+  }
+]

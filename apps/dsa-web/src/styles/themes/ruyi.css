@@ -1,0 +1,423 @@
+:root {
+  color-scheme: light;
+
+  /* 如意国风科技蓝 · 月白青瓷 */
+  --background: 206 47% 97%;
+  --foreground: 214 59% 15%;
+  --card: 0 0% 100%;
+  --card-foreground: 214 59% 15%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 214 59% 15%;
+  --primary: 196 91% 35%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 208 45% 94%;
+  --secondary-foreground: 214 59% 15%;
+  --muted: 208 36% 94%;
+  --muted-foreground: 212 22% 41%;
+  --accent: 185 29% 92%;
+  --accent-foreground: 214 59% 15%;
+  --destructive: 351 58% 50%;
+  --destructive-foreground: 0 0% 100%;
+  --border: 185 21% 89%;
+  --input: 185 21% 86%;
+  --ring: 196 91% 35%;
+  --elevated: 208 45% 94%;
+  --hover: 190 32% 91%;
+  --secondary-text: 212 22% 41%;
+  --muted-text: 211 17% 49%;
+
+  /* Component surfaces: one theme contract for cards, insets and floating UI. */
+  --surface-card-radius: 1rem;
+  --surface-card-inner-radius: calc(var(--surface-card-radius) - var(--surface-card-border-width));
+  --surface-card-radius-emphasis: 1.25rem;
+  --surface-card-border-width: 1px;
+  --surface-card-bg-alpha: 0.72;
+  --surface-card-background: hsl(var(--card) / var(--surface-card-bg-alpha));
+  --surface-card-border: var(--border-subtle);
+  --surface-card-backdrop-blur: 18px;
+  --surface-card-backdrop-saturate: 100%;
+  --surface-card-backdrop:
+    blur(var(--surface-card-backdrop-blur))
+    saturate(var(--surface-card-backdrop-saturate));
+  --surface-card-shadow: var(--shadow-soft-card);
+  --surface-card-shadow-hover: var(--shadow-soft-card-strong);
+  --surface-card-emphasis-backdrop-blur: 22px;
+
+  --surface-inset-radius: 0.875rem;
+  --surface-inset-background: var(--home-panel-subtle-bg);
+  --surface-inset-background-hover: var(--home-panel-subtle-bg-hover);
+  --surface-inset-border: var(--home-panel-border);
+  --surface-inset-shadow: inset 0 1px 0 hsl(0 0% 100% / 0.72);
+  --surface-inset-shadow-hover:
+    inset 0 1px 0 hsl(0 0% 100% / 0.78),
+    0 10px 18px hsl(220 18% 30% / 0.08);
+
+  --surface-floating-radius: 1rem;
+  --surface-floating-bg-alpha: 0.86;
+  --surface-floating-background: hsl(var(--card) / var(--surface-floating-bg-alpha));
+  --surface-floating-border: var(--border-subtle);
+  --surface-floating-backdrop-blur: 16px;
+  --surface-floating-backdrop:
+    blur(var(--surface-floating-backdrop-blur))
+    saturate(105%);
+  --surface-floating-shadow: var(--shadow-soft-card-strong);
+
+  --brand-blue: 196 91% 35%;
+  --brand-jade: 164 47% 42%;
+  --brand-gold: 41 57% 52%;
+  --color-cyan: hsl(var(--primary));
+  --color-cyan-dim: hsl(196 76% 31%);
+  --color-cyan-glow: hsl(196 91% 35% / 0.16);
+  --color-purple: 228 31% 50%;
+  --color-purple-dim: 228 31% 43%;
+  --color-purple-glow: hsl(228 31% 50% / 0.14);
+  --color-success: 163 88% 26%;
+  --color-warning: 36 83% 42%;
+  --color-danger: 351 58% 50%;
+  --color-cyan-400: 196 76% 36%;
+  --color-emerald-400: 163 88% 26%;
+  --color-red-400: 351 58% 50%;
+  --color-amber-400: 36 83% 42%;
+  --success: var(--color-success);
+  --warning: var(--color-warning);
+  --danger: var(--color-danger);
+
+  --nav-active-bg: hsl(196 91% 35% / 0.1);
+  --nav-active-border: hsl(196 91% 35% / 0.24);
+  --nav-hover-bg: hsl(196 91% 35% / 0.06);
+  --nav-icon-active: hsl(196 91% 35%);
+  --nav-indicator-bg: hsl(196 91% 35%);
+  --nav-indicator-shadow: hsl(196 91% 35% / 0.34);
+  --nav-brand-shadow: hsl(196 91% 35% / 0.16);
+  --shell-sidebar-border: hsl(196 63% 39% / 0.24);
+
+  --home-title-accent: hsl(196 91% 35%);
+  --home-secondary-accent-text: hsl(228 31% 50%);
+  --home-price-up: hsl(351 58% 50%);
+  --home-price-down: hsl(163 88% 26%);
+  --home-strategy-buy: hsl(163 88% 26%);
+  --home-strategy-secondary: hsl(196 91% 35%);
+  --home-panel-border: hsl(185 21% 82% / 0.88);
+  --home-panel-border-hover: hsl(196 91% 35% / 0.2);
+  --home-panel-border-selected: hsl(196 91% 35% / 0.34);
+  --home-panel-gradient-start: hsl(196 91% 35% / 0.09);
+  --home-panel-gradient-mid: hsl(170 54% 42% / 0.07);
+  --home-panel-gradient-end: hsl(208 45% 94% / 0.12);
+  --home-panel-subtle-bg: hsl(0 0% 100% / 0.9);
+  --home-panel-subtle-bg-hover: hsl(190 32% 95% / 0.96);
+  --home-history-item-bg: hsl(0 0% 100% / 0.84);
+  --home-history-item-hover-bg: hsl(190 32% 95% / 0.98);
+  --home-history-item-selected-bg: linear-gradient(180deg, hsl(196 91% 35% / 0.08), hsl(206 47% 97% / 0.98));
+  --home-hero-border: hsl(196 91% 35% / 0.28);
+  --home-hero-gradient-start: hsl(196 91% 35% / 0.18);
+  --home-hero-gradient-mid: hsl(var(--brand-jade) / 0.18);
+  --home-hero-gradient-end: hsl(41 57% 64% / 0.08);
+  --home-rail-border: hsl(185 21% 82% / 0.9);
+  --home-rail-bg: linear-gradient(180deg, hsl(0 0% 100% / 0.96), hsl(206 47% 97% / 0.96));
+  --home-rail-gradient-start: hsl(var(--brand-blue) / 0.12);
+  --home-rail-gradient-mid: hsl(var(--brand-jade) / 0.16);
+  --home-rail-gradient-end: hsl(var(--brand-gold) / 0.08);
+
+  --border-purple: hsl(var(--brand-jade) / 0.26);
+  --home-action-report-bg: hsl(var(--brand-jade) / 0.1);
+  --home-action-report-border: hsl(var(--brand-jade) / 0.22);
+  --home-action-report-text: hsl(164 58% 29%);
+  --home-action-report-hover-bg: hsl(var(--brand-jade) / 0.18);
+  --home-prose-blockquote-border: hsl(var(--brand-gold) / 0.36);
+  --home-prose-blockquote-bg: hsl(var(--brand-gold) / 0.08);
+
+  --settings-primary-gradient: linear-gradient(135deg, hsl(196 91% 35%), hsl(170 54% 42%));
+  --settings-primary-text: hsl(0 0% 100%);
+  --settings-primary-border: hsl(196 91% 35% / 0.3);
+  --settings-accent-shadow: hsl(196 91% 35% / 0.1);
+  --gradient-primary: linear-gradient(135deg, hsl(196 91% 31%), hsl(170 54% 30%));
+
+  --login-bg-main: hsl(206 47% 97%);
+  --login-bg-card: hsl(0 0% 100% / 0.88);
+  --login-border-card: hsl(196 55% 42% / 0.28);
+  --login-border-input: hsl(196 48% 48% / 0.5);
+  --login-text-primary: hsl(214 59% 15%);
+  --login-text-secondary: hsl(212 22% 41%);
+  --login-text-muted: hsl(211 20% 40%);
+  --login-accent-soft: hsl(196 91% 35% / 0.08);
+  --login-accent-border: hsl(196 91% 35% / 0.22);
+  --login-accent-text: hsl(196 91% 30%);
+  --login-accent-glow: hsl(196 80% 55% / 0.18);
+  --login-brand-button-start: hsl(196 91% 31%);
+  --login-brand-button-end: hsl(170 54% 30%);
+  --login-brand-button-start-hover: hsl(196 91% 27%);
+  --login-brand-button-end-hover: hsl(170 54% 26%);
+  --login-button-text: hsl(0 0% 100%);
+
+  --ruyi-shell-glow-primary: hsl(196 80% 55% / 0.13);
+  --ruyi-shell-glow-secondary: hsl(170 54% 62% / 0.1);
+  --ruyi-shell-glow-gold: hsl(41 57% 64% / 0.06);
+  --ruyi-pattern-color: hsl(196 91% 35% / 0.34);
+  --ruyi-pattern-opacity: 0.1;
+  --ruyi-sidebar-bg: linear-gradient(180deg, hsl(0 0% 100% / 0.9), hsl(206 47% 97% / 0.82));
+  --ruyi-sidebar-radius: 1.5rem;
+  --ruyi-sidebar-backdrop-blur: 18px;
+  --ruyi-sidebar-backdrop-saturate: 110%;
+  --ruyi-sidebar-shadow: 0 20px 46px hsl(214 35% 32% / 0.1), inset 0 1px 0 hsl(0 0% 100% / 0.72);
+  --ruyi-illustration-surface: hsl(0 0% 100% / 0.64);
+  --ruyi-illustration-ink: hsl(214 59% 15%);
+  --ruyi-illustration-blue: hsl(196 91% 35%);
+  --ruyi-illustration-jade: hsl(164 47% 47%);
+  --ruyi-illustration-gold: hsl(41 57% 52%);
+  --ruyi-illustration-grid: hsl(196 48% 48% / 0.2);
+}
+
+.dark {
+  color-scheme: dark;
+
+  /* 金股睿析 · 星河金曜 */
+  --background: 210 30% 7%;
+  --foreground: 210 40% 96%;
+  --card: 210 30% 12%;
+  --card-foreground: 210 40% 96%;
+  --popover: 210 30% 14%;
+  --popover-foreground: 210 40% 96%;
+  --primary: 192 100% 45%;
+  --primary-foreground: 210 30% 7%;
+  --secondary: 210 25% 17%;
+  --secondary-foreground: 210 40% 96%;
+  --muted: 210 22% 15%;
+  --muted-foreground: 210 20% 72%;
+  --accent: 42 60% 50%;
+  --accent-foreground: 210 30% 7%;
+  --destructive: 356 100% 71%;
+  --destructive-foreground: 210 30% 7%;
+  --border: 210 25% 20%;
+  --input: 210 20% 24%;
+  --ring: 192 100% 45%;
+  --elevated: 210 28% 15%;
+  --hover: 210 22% 18%;
+  --secondary-text: 210 20% 72%;
+  --muted-text: 210 18% 58%;
+
+  --surface-card-bg-alpha: 0.72;
+  --surface-floating-bg-alpha: 0.86;
+  --surface-inset-shadow: inset 0 1px 0 hsl(0 0% 100% / 0.03);
+  --surface-inset-shadow-hover:
+    inset 0 1px 0 hsl(0 0% 100% / 0.04),
+    0 10px 18px hsl(220 18% 8% / 0.2);
+
+  --brand-blue: 196 80% 55%;
+  --brand-jade: 170 54% 62%;
+  --brand-gold: 42 100% 52%;
+  --color-cyan: hsl(var(--primary));
+  --color-cyan-dim: hsl(196 80% 48%);
+  --color-cyan-glow: hsl(196 80% 55% / 0.28);
+  --color-purple: 42 100% 50%;
+  --color-purple-dim: 42 90% 42%;
+  --color-purple-glow: hsl(42 100% 50% / 0.18);
+  --color-success: 158 64% 48%;
+  --color-warning: 41 77% 58%;
+  --color-danger: 356 100% 71%;
+  --color-cyan-400: 196 80% 55%;
+  --color-emerald-400: 158 64% 48%;
+  --color-red-400: 356 100% 71%;
+  --color-amber-400: 41 77% 58%;
+  --success: var(--color-success);
+  --warning: var(--color-warning);
+  --danger: var(--color-danger);
+
+  --nav-active-bg: hsl(196 80% 55% / 0.12);
+  --nav-active-border: hsl(196 80% 55% / 0.3);
+  --nav-hover-bg: hsl(196 80% 55% / 0.07);
+  --nav-icon-active: hsl(196 80% 62%);
+  --nav-indicator-bg: hsl(170 54% 62%);
+  --nav-indicator-shadow: hsl(196 80% 55% / 0.5);
+  --nav-brand-shadow: hsl(196 80% 55% / 0.24);
+  --shell-sidebar-border: hsl(196 80% 55% / 0.24);
+
+  --home-title-accent: hsl(42 100% 55%);
+  --home-secondary-accent-text: hsl(42 100% 55%);
+  --home-price-up: hsl(356 100% 71%);
+  --home-price-down: hsl(158 64% 48%);
+  --home-strategy-buy: hsl(158 64% 48%);
+  --home-strategy-secondary: hsl(196 80% 55%);
+  --home-panel-border: hsl(208 54% 32% / 0.76);
+  --home-panel-border-hover: hsl(196 80% 55% / 0.28);
+  --home-panel-border-selected: hsl(196 80% 55% / 0.42);
+  --home-panel-gradient-start: hsl(196 80% 55% / 0.13);
+  --home-panel-gradient-mid: hsl(170 54% 62% / 0.08);
+  --home-panel-gradient-end: hsl(41 57% 64% / 0.05);
+  --home-panel-subtle-bg: hsl(214 61% 19% / 0.78);
+  --home-panel-subtle-bg-hover: hsl(208 54% 26% / 0.82);
+  --home-history-item-bg: hsl(214 66% 15% / 0.78);
+  --home-history-item-hover-bg: hsl(208 54% 26% / 0.72);
+  --home-history-item-selected-bg: linear-gradient(180deg, hsl(196 80% 55% / 0.13), hsl(214 61% 19% / 0.9));
+  --home-hero-border: hsl(196 80% 55% / 0.34);
+  --home-hero-gradient-start: hsl(196 80% 55% / 0.22);
+  --home-hero-gradient-mid: hsl(var(--brand-jade) / 0.18);
+  --home-hero-gradient-end: hsl(41 57% 64% / 0.08);
+  --home-rail-border: hsl(208 54% 32% / 0.74);
+  --home-rail-bg: linear-gradient(180deg, hsl(214 66% 15% / 0.92), hsl(215 69% 9% / 0.88));
+
+  --border-purple: hsl(var(--brand-jade) / 0.28);
+  --home-action-report-bg: hsl(var(--brand-jade) / 0.12);
+  --home-action-report-border: hsl(var(--brand-jade) / 0.24);
+  --home-action-report-text: hsl(var(--brand-jade));
+  --home-action-report-hover-bg: hsl(var(--brand-jade) / 0.2);
+  --home-prose-blockquote-border: hsl(var(--brand-gold) / 0.4);
+  --home-prose-blockquote-bg: hsl(var(--brand-gold) / 0.1);
+
+  --settings-primary-gradient: linear-gradient(135deg, hsl(196 80% 55%), hsl(170 54% 62%));
+  --settings-primary-text: hsl(215 69% 9%);
+  --settings-primary-border: hsl(196 80% 55% / 0.32);
+  --settings-accent-shadow: hsl(196 80% 55% / 0.12);
+  --gradient-primary: linear-gradient(135deg, hsl(196 80% 55%), hsl(170 54% 62%));
+
+  --login-bg-main: hsl(215 69% 9%);
+  --login-bg-card: hsl(214 66% 15% / 0.84);
+  --login-border-card: hsl(196 80% 55% / 0.26);
+  --login-border-input: hsl(196 60% 56% / 0.46);
+  --login-text-primary: hsl(214 47% 97%);
+  --login-text-secondary: hsl(214 31% 78%);
+  --login-text-muted: hsl(211 23% 64%);
+  --login-accent-soft: hsl(196 80% 55% / 0.1);
+  --login-accent-border: hsl(196 80% 55% / 0.24);
+  --login-accent-text: hsl(196 80% 68%);
+  --login-accent-glow: hsl(196 80% 55% / 0.24);
+  --login-brand-button-start: hsl(196 80% 50%);
+  --login-brand-button-end: hsl(170 54% 52%);
+  --login-brand-button-start-hover: hsl(196 80% 56%);
+  --login-brand-button-end-hover: hsl(170 54% 58%);
+  --login-button-text: hsl(215 69% 9%);
+
+  --ruyi-shell-glow-primary: hsl(196 80% 55% / 0.18);
+  --ruyi-shell-glow-secondary: hsl(170 54% 62% / 0.12);
+  --ruyi-shell-glow-gold: hsl(41 57% 64% / 0.07);
+  --ruyi-pattern-color: hsl(196 80% 62% / 0.36);
+  --ruyi-pattern-opacity: 0.1;
+  --ruyi-sidebar-bg: linear-gradient(180deg, hsl(214 66% 15% / 0.86), hsl(215 69% 9% / 0.76));
+  --ruyi-sidebar-shadow: 0 24px 54px hsl(215 72% 3% / 0.34), inset 0 1px 0 hsl(196 80% 70% / 0.08);
+  --ruyi-illustration-surface: hsl(214 61% 19% / 0.72);
+  --ruyi-illustration-ink: hsl(214 47% 97%);
+  --ruyi-illustration-blue: hsl(196 80% 55%);
+  --ruyi-illustration-jade: hsl(170 54% 62%);
+  --ruyi-illustration-gold: hsl(41 57% 64%);
+  --ruyi-illustration-grid: hsl(196 80% 62% / 0.2);
+}
+
+html,
+body {
+  background: hsl(var(--background));
+}
+
+.lucide {
+  stroke-width: 1.75;
+}
+
+.ruyi-shell {
+  isolation: isolate;
+  position: relative;
+  background:
+    radial-gradient(circle at 10% 0%, var(--ruyi-shell-glow-primary), transparent 32%),
+    radial-gradient(circle at 92% 94%, var(--ruyi-shell-glow-secondary), transparent 28%),
+    radial-gradient(circle at 74% 10%, var(--ruyi-shell-glow-gold), transparent 22%),
+    hsl(var(--background));
+}
+
+.ruyi-shell-backdrop,
+.ruyi-login-backdrop {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.ruyi-shell-backdrop::before,
+.ruyi-login-backdrop::before {
+  position: absolute;
+  inset: -4rem;
+  content: '';
+  background-color: var(--ruyi-pattern-color);
+  mask-image: url('/brand/ruyi-cloud-pattern.svg');
+  mask-position: center;
+  mask-repeat: repeat;
+  mask-size: 260px 132px;
+  opacity: var(--ruyi-pattern-opacity);
+}
+
+.ruyi-shell-backdrop::after,
+.ruyi-login-backdrop::after {
+  position: absolute;
+  inset: 0;
+  content: '';
+  background:
+    radial-gradient(circle at 8% 12%, var(--ruyi-shell-glow-primary), transparent 26%),
+    radial-gradient(circle at 86% 86%, var(--ruyi-shell-glow-secondary), transparent 24%);
+}
+
+.ruyi-shell-sidebar {
+  background: var(--ruyi-sidebar-bg);
+  -webkit-backdrop-filter:
+    blur(var(--ruyi-sidebar-backdrop-blur))
+    saturate(var(--ruyi-sidebar-backdrop-saturate));
+  backdrop-filter:
+    blur(var(--ruyi-sidebar-backdrop-blur))
+    saturate(var(--ruyi-sidebar-backdrop-saturate));
+  box-shadow: var(--ruyi-sidebar-shadow);
+}
+
+.ruyi-login {
+  isolation: isolate;
+  background:
+    radial-gradient(circle at 16% 16%, var(--ruyi-shell-glow-primary), transparent 32%),
+    radial-gradient(circle at 82% 84%, var(--ruyi-shell-glow-secondary), transparent 28%),
+    hsl(var(--background));
+}
+
+.ruyi-login-backdrop::before {
+  mask-size: 300px 152px;
+  opacity: calc(var(--ruyi-pattern-opacity) * 1.25);
+}
+
+.ruyi-login-card {
+  border-radius: var(--surface-card-radius-emphasis);
+  border: 1px solid var(--login-border-card);
+  background: var(--login-bg-card);
+  box-shadow:
+    0 30px 74px hsl(214 68% 6% / 0.24),
+    inset 0 1px 0 hsl(var(--foreground) / 0.08);
+  -webkit-backdrop-filter:
+    blur(var(--surface-card-emphasis-backdrop-blur))
+    saturate(var(--surface-card-backdrop-saturate));
+  backdrop-filter:
+    blur(var(--surface-card-emphasis-backdrop-blur))
+    saturate(var(--surface-card-backdrop-saturate));
+}
+
+.btn-primary {
+  border-color: hsl(var(--brand-blue) / 0.3);
+  background: var(--gradient-primary);
+  color: hsl(var(--primary-foreground));
+  box-shadow: 0 12px 28px hsl(var(--brand-blue) / 0.18);
+}
+
+.btn-primary:hover,
+:root:not(.dark) .portfolio-page .btn-primary:hover:not(:disabled) {
+  box-shadow: 0 18px 34px hsl(var(--brand-blue) / 0.22);
+}
+
+@keyframes ruyi-shimmer {
+  to {
+    transform: translateX(100%);
+  }
+}
+
+@media (max-width: 639px) {
+  .ruyi-shell-backdrop::before,
+  .ruyi-login-backdrop::before {
+    mask-size: 210px 106px;
+    opacity: calc(var(--ruyi-pattern-opacity) * 0.72);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ruyi-shimmer {
+    animation: none !important;
+  }
+}

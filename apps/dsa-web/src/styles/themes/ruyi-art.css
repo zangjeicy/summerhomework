@@ -1,0 +1,85 @@
+:root {
+  --ruyi-scene-image: url('/brand/ruyi-shanhai-light.jpg');
+  --ruyi-scene-shell-overlay: linear-gradient(
+    90deg,
+    hsl(206 47% 97% / 0.55) 0%,
+    hsl(206 47% 97% / 0.68) 48%,
+    hsl(206 47% 97% / 0.88) 100%
+  );
+  --ruyi-scene-login-overlay: linear-gradient(
+    90deg,
+    hsl(206 47% 97% / 0.03) 0%,
+    hsl(206 47% 97% / 0.08) 43%,
+    hsl(206 47% 97% / 0.72) 62%,
+    hsl(206 47% 97% / 0.95) 100%
+  );
+}
+
+.dark {
+  --ruyi-scene-image: url('/brand/ruyi-shanhai-dark.jpg');
+  --ruyi-scene-shell-overlay: linear-gradient(
+    90deg,
+    hsl(215 69% 9% / 0.42) 0%,
+    hsl(215 69% 9% / 0.58) 48%,
+    hsl(215 69% 9% / 0.85) 100%
+  );
+  --ruyi-scene-login-overlay: linear-gradient(
+    90deg,
+    hsl(215 69% 9% / 0.01) 0%,
+    hsl(215 69% 9% / 0.06) 43%,
+    hsl(215 69% 9% / 0.65) 62%,
+    hsl(215 69% 9% / 0.92) 100%
+  );
+}
+
+.ruyi-shell-backdrop {
+  background-image: var(--ruyi-scene-shell-overlay), var(--ruyi-scene-image);
+  background-position: center, 25% center;
+  background-repeat: no-repeat;
+  background-size: cover;
+}
+
+.ruyi-login-backdrop {
+  background-image: var(--ruyi-scene-login-overlay), var(--ruyi-scene-image);
+  background-position: center, left center;
+  background-repeat: no-repeat;
+  background-size: cover;
+}
+
+.ruyi-login-backdrop::before {
+  opacity: 0.03;
+}
+
+.ruyi-shell-backdrop::after {
+  background:
+    radial-gradient(circle at 8% 12%, var(--ruyi-shell-glow-primary), transparent 28%),
+    radial-gradient(circle at 86% 86%, var(--ruyi-shell-glow-secondary), transparent 26%);
+}
+
+.ruyi-login-backdrop::after {
+  background:
+    linear-gradient(180deg, hsl(var(--background) / 0.03), transparent 34%, hsl(var(--background) / 0.08)),
+    radial-gradient(circle at 14% 34%, hsl(42 100% 50% / 0.08), transparent 28%);
+}
+
+@media (max-width: 1023px) {
+  .ruyi-login-backdrop {
+    background-image:
+      linear-gradient(hsl(var(--background) / 0.35), hsl(var(--background) / 0.65)),
+      var(--ruyi-scene-image);
+    background-position: center, 30% center;
+  }
+}
+
+@media (max-width: 639px) {
+  .ruyi-shell-backdrop {
+    background-position: center, 30% center;
+  }
+
+  .ruyi-login-backdrop {
+    background-image:
+      linear-gradient(hsl(var(--background) / 0.55), hsl(var(--background) / 0.78)),
+      var(--ruyi-scene-image);
+    background-position: center, 25% center;
+  }
+}

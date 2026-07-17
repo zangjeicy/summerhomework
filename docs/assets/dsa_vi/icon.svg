@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-labelledby="title desc">
+  <title id="title">金股睿析图标</title>
+  <desc id="desc">如意云纹与向上走势融合的量化分析图标</desc>
+  <defs>
+    <linearGradient id="bg" x1="8" y1="4" x2="58" y2="62" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#0B1F45"/>
+      <stop offset="0.58" stop-color="#174BA5"/>
+      <stop offset="1" stop-color="#087F9E"/>
+    </linearGradient>
+    <linearGradient id="trend" x1="15" y1="46" x2="50" y2="27" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#62E6FF"/>
+      <stop offset="1" stop-color="#70F0B5"/>
+    </linearGradient>
+  </defs>
+  <rect x="2" y="2" width="60" height="60" rx="16" fill="url(#bg)"/>
+  <rect x="2.75" y="2.75" width="58.5" height="58.5" rx="15.25" fill="none" stroke="#B9E8FF" stroke-opacity="0.22" stroke-width="1.5"/>
+  <path d="M15 27.5c0-5.3 4.2-9.5 9.5-9.5 2.2 0 4.2.7 5.8 2.1 1.9-4.8 6.1-7.6 10.9-7.6 6.4 0 11.6 5.2 11.6 11.6 0 5.7-4.1 10.4-9.6 11.4" fill="none" stroke="#F8FCFF" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M15.5 46 26.5 36.8 35.2 41.5 49 27.5M41.8 27.5H49v7.2" fill="none" stroke="url(#trend)" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
