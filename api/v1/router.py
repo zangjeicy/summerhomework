@@ -12,6 +12,7 @@ API v1 路由聚合
 from fastapi import APIRouter
 
 from api.v1.endpoints import (
+    ml_insights,
     agent,
     alerts,
     alphasift,
@@ -113,4 +114,10 @@ router.include_router(
 router.include_router(
     health.router,
     tags=["Health"]
+)
+
+router.include_router(
+    ml_insights.router,
+    prefix="/ml",
+    tags=["ML-LLM Fusion"]
 )
