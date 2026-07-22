@@ -21,13 +21,13 @@ class HistoryItem(BaseModel):
     """历史记录摘要（列表展示用）"""
 
     id: Optional[int] = Field(None, description="分析历史记录主键 ID")
-    query_id: str = Field(..., description="分析记录关联 query_id（批量分析时重复）")
+    query_id: Optional[str] = Field(None, description="分析记录关联 query_id（批量分析时重复；历史数据可能为 null）")
     stock_code: str = Field(..., description="股票代码")
     stock_name: Optional[str] = Field(None, description="股票名称")
     report_type: Optional[str] = Field(None, description="报告类型")
     trend_prediction: Optional[str] = Field(None, description="趋势预测")
     analysis_summary: Optional[str] = Field(None, description="分析摘要")
-    sentiment_score: Optional[int] = Field(
+    sentiment_score: Optional[float] = Field(
         None,
         description="情绪评分（历史数据可能超出 0-100 范围，读取时不做约束）",
     )
@@ -128,7 +128,7 @@ class ReportMeta(BaseModel):
     model_config = ConfigDict(protected_namespaces=("model_validate", "model_dump"))
 
     id: Optional[int] = Field(None, description="分析历史记录主键 ID（仅历史报告有此字段）")
-    query_id: str = Field(..., description="分析记录关联 query_id（批量分析时重复）")
+    query_id: Optional[str] = Field(None, description="分析记录关联 query_id（批量分析时重复；历史数据可能为 null）")
     stock_code: str = Field(..., description="股票代码")
     stock_name: Optional[str] = Field(None, description="股票名称")
     report_type: Optional[str] = Field(None, description="报告类型")

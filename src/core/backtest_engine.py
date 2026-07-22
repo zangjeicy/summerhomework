@@ -13,6 +13,8 @@ import math
 import re
 from typing import Any, Dict, Iterable, List, Optional, Protocol, Sequence
 
+import numpy as np
+
 
 OVERALL_SENTINEL_CODE = "__overall__"
 
@@ -817,4 +819,97 @@ class BacktestEngine:
         return {
             "eval_status": status_counts,
             "first_hit": first_hit_counts,
+        }
+
+    @classmethod
+    def compute_risk_metrics(
+        cls,
+        *,
+        results: Iterable[BacktestResultLike],
+        risk_free_rate: float = 0.03,
+    ) -> Dict[str, Any]:
+        """基于回测结果计算风险调整收益指标（P2：新增）。
+
+        计算指标：
+            - Sharpe Ratio: (年化超额收益 - 无风险利率) / 年化波动率
+            - Sortino Ratio: 只惩罚下行波动
+            - Max Drawdown: 最大回撤 (%) 及回撤区间
+            - Annualized Return: 年化收益
+            - Annualized Volatility: 年化波动率
+            - Calmar Ratio: 年化收益 / 最大回撤
+            - Win/Loss Ratio: 平均盈利 / 平均亏损
+
+        Args:
+            results: 回测结果列表
+            risk_free_rate: 年化无风险利率（默认 3%）
+
+        Returns:
+            dict 风险指标
+        """
+        results_list = list(results)
+        returns = []
+        equity_curve = []
+        cumulative = 1.0
+
+        for r in results_list:
+            ret = r.stock_return_pct
+            if ret is not None:
+                returns.append(ret)
+                cumulative *= (1 + ret / 100)
+                equity_curve.append(cumulative)
+
+        if len(returns) < 3:
+            return {"error": "数据点不足 (需 >= 3)", "count": len(returns)}
+
+        returns_arr = np.array(returns)
+        n = len(returns_arr)
+
+        # 年化收益
+        total_return_pct = (cumulative - 1) * 100
+        annualized_return = ((cumulative) ** (252 / n) - 1) * 100
+
+        # 年化波动率
+        daily_vol = np.std(returns_arr, ddof=1)
+        annualized_vol = daily_vol * np.sqrt(252)
+
+        # Sharpe Ratio
+        excess_return = annualized_return - risk_free_rate * 100
+        sharpe = excess_return / annualized_vol if annualized_vol > 0 else 0.0
+
+        # Sortino Ratio
+        downside_returns = returns_arr[returns_arr < 0]
+        if len(downside_returns) > 0:
+            downside_vol = np.std(downside_returns, ddof=1) * np.sqrt(252)
+            sortino = excess_return / downside_vol if downside_vol > 0 else 0.0
+        else:
+            sortino = float('inf') if excess_return > 0 else 0.0
+
+        # Max Drawdown
+        peaks = np.maximum.accumulate(equity_curve)
+        drawdowns = [(equity_curve[i] - peaks[i]) / peaks[i] * 100 for i in range(len(equity_curve))]
+        max_dd = min(drawdowns) if drawdowns else 0.0
+        max_dd_idx = int(np.argmin(drawdowns))
+
+        # Calmar Ratio
+        calmar = annualized_return / abs(max_dd) if abs(max_dd) > 0 else float('inf') if annualized_return > 0 else 0.0
+
+        # Win/Loss Ratio
+        wins = returns_arr[returns_arr > 0]
+        losses = returns_arr[returns_arr < 0]
+        avg_win = float(np.mean(wins)) if len(wins) > 0 else 0.0
+        avg_loss = float(np.mean(losses)) if len(losses) > 0 else 0.0
+        win_loss_ratio = abs(avg_win / avg_loss) if avg_loss != 0 else float('inf') if avg_win > 0 else 0.0
+
+        return {
+            "total_return_pct": round(total_return_pct, 2),
+            "annualized_return_pct": round(annualized_return, 2),
+            "annualized_volatility_pct": round(annualized_vol, 2),
+            "sharpe_ratio": round(sharpe, 4),
+            "sortino_ratio": round(sortino, 4) if sortino != float('inf') else "inf",
+            "max_drawdown_pct": round(max_dd, 2),
+            "calmar_ratio": round(calmar, 4) if calmar != float('inf') else "inf",
+            "win_loss_ratio": round(win_loss_ratio, 4) if win_loss_ratio != float('inf') else "inf",
+            "avg_win_pct": round(avg_win, 2),
+            "avg_loss_pct": round(avg_loss, 2),
+            "count": n,
         }

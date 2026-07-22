@@ -68,6 +68,9 @@ reports/
 .DS_Store
 Thumbs.db
 
+# ML 模型文件（二进制产物，不纳入版本控制）
+*.pkl
+
 # 测试
 .pytest_cache/
 .coverage

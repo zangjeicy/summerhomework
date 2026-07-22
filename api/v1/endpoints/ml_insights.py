@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
-"""ML+LLM 融合分析端点 — 暴露 ML 预测、因子、融合对比数据。"""
+"""ML+LLM 融合分析端点 — 暴露 ML 预测、SHAP 解释、因子、融合对比数据。"""
 
 import logging
 from datetime import date, datetime
-from typing import Optional
+from pathlib import Path
+from typing import Optional, Any
 
 import numpy as np
 import pandas as pd
@@ -15,6 +16,21 @@ from data_provider import DataFetcherManager
 logger = logging.getLogger(__name__)
 
 router = APIRouter(tags=["ML-LLM Fusion"])
+
+
+def _sanitize(obj: Any) -> Any:
+    """递归将 numpy 类型转换为原生 Python 类型，确保 JSON 可序列化。"""
+    if isinstance(obj, (np.integer,)):
+        return int(obj)
+    if isinstance(obj, (np.floating,)):
+        return float(obj)
+    if isinstance(obj, np.ndarray):
+        return obj.tolist()
+    if isinstance(obj, dict):
+        return {k: _sanitize(v) for k, v in obj.items()}
+    if isinstance(obj, (list, tuple)):
+        return [_sanitize(v) for v in obj]
+    return obj
 
 
 def _demo_kline(n: int = 300) -> pd.DataFrame:
@@ -30,7 +46,102 @@ def _demo_kline(n: int = 300) -> pd.DataFrame:
     })
 
 
-@router.get("/ml/analyze/{stock_code}")
+@router.get("/models")
+async def ml_models():
+    """列出所有已训练的 ML 模型及其指标。"""
+    from src.core.ml_predictor.trainer import MLTrainer
+    _MODELS_DIR = Path(__file__).resolve().parent.parent.parent.parent / "src" / "core" / "ml_predictor" / "models"
+    models = []
+    if _MODELS_DIR.exists():
+        for f in sorted(_MODELS_DIR.glob("*.pkl")):
+            try:
+                data = MLTrainer.load_model(f.stem.split("_")[0], f.stem.split("_")[-1])
+                if data:
+                    models.append({
+                        "stock_code": f.stem.rsplit("_", 1)[0],
+                        "version": data.get("version", ""),
+                        "feature_count": len(data.get("features", [])),
+                        "file": f.name,
+                    })
+            except Exception:
+                pass
+    return {"models": models, "count": len(models)}
+
+
+@router.get("/explain/{stock_code}")
+async def ml_explain(stock_code: str):
+    """返回 SHAP 可解释性分析。"""
+    from src.core.ml_predictor.predictor import MLPredictor
+
+    try:
+        try:
+            fetcher = DataFetcherManager()
+            kline = fetcher.get_daily_data(stock_code, days=240)
+            if kline is None or (hasattr(kline, '__len__') and len(kline) < 30):
+                df = _demo_kline()
+            else:
+                df = kline
+        except Exception:
+            df = _demo_kline()
+
+        predictor = MLPredictor()
+        try:
+            result = predictor.explain(stock_code, df)
+        except Exception as e:
+            logger.warning("[ML] explain() 异常: %s", e)
+            result = None
+
+        if result is None:
+            # fallback: 只有预测没有 SHAP
+            try:
+                pred = predictor.predict(stock_code, "", df)
+            except Exception as e:
+                logger.warning("[ML] predict() 异常: %s", e)
+                return _sanitize({
+                    "stock_code": stock_code,
+                    "shap_available": False,
+                    "prediction": {"direction": "neutral", "confidence": 0.0, "score": 0.0},
+                    "feature_importance": [],
+                    "error": str(e),
+                })
+            return _sanitize({
+                "stock_code": stock_code,
+                "shap_available": False,
+                "prediction": {
+                    "direction": pred.direction,
+                    "confidence": pred.confidence,
+                    "score": pred.score,
+                },
+                "feature_importance": [
+                    {"feature": f.feature, "importance": f.importance}
+                    for f in pred.top_features[:10]
+                ],
+            })
+
+        return _sanitize({
+            "stock_code": stock_code,
+            "shap_available": True,
+            "base_value": result["base_value"],
+            "prediction": {
+                "direction": result["prediction_direction"],
+                "confidence": result["prediction_confidence"],
+            },
+            "shap_values": result["shap_values"][:15],
+            "top_positive": result["top_positive"],
+            "top_negative": result["top_negative"],
+        })
+    except Exception as e:
+        logger.error("[ML] explain 端点异常: %s", e, exc_info=True)
+        return _sanitize({
+            "stock_code": stock_code,
+            "shap_available": False,
+            "prediction": {"direction": "neutral", "confidence": 0.0, "score": 0.0},
+            "feature_importance": [],
+            "error": str(e),
+        })
+
+
+@router.get("/analyze/{stock_code}")
 async def ml_analyze(stock_code: str, stock_name: str = ""):
     """运行完整 ML+LLM 融合分析链路，返回对比数据。"""
     from src.core.ml_predictor.predictor import MLPredictor
@@ -39,22 +150,37 @@ async def ml_analyze(stock_code: str, stock_name: str = ""):
     from src.core.fusion_engine.schemas import SignalSource
     from src.core.fusion_engine.fusion import FusionEngine
 
-    df = _demo_kline()
-    close = df["close"]
+    try:
+        df = _demo_kline()
+        close = df["close"]
 
-    # ── 1. ML 预测 ──
-    predictor = MLPredictor()
-    ml_pred = predictor.predict(stock_code, stock_name, df)
+        # ── 1. ML 预测 ──
+        predictor = MLPredictor()
+        ml_pred = predictor.predict(stock_code, stock_name, df)
 
-    # ── 2. 因子计算 ──
-    from data_provider.factors.technical_factors import TechnicalFactors
-    tf = TechnicalFactors()
-    factor_df = tf.compute(df.copy())
-    factor_cols = [c for c in factor_df.columns if c.startswith("factor_")]
-    latest_factors = {}
-    if factor_cols:
-        last_row = factor_df[factor_cols].tail(1).iloc[0]
-        latest_factors = {k.replace("factor_", ""): round(v, 4) for k, v in last_row.items() if not (isinstance(v, float) and np.isnan(v))}
+        # ── 2. 因子计算 ──
+        from data_provider.factors.technical_factors import TechnicalFactors
+        tf = TechnicalFactors()
+        factor_df = tf.compute(df.copy())
+        factor_cols = [c for c in factor_df.columns if c.startswith("factor_")]
+        latest_factors = {}
+        if factor_cols:
+            last_row = factor_df[factor_cols].tail(1).iloc[0]
+            latest_factors = {k.replace("factor_", ""): round(v, 4) for k, v in last_row.items() if not (isinstance(v, float) and np.isnan(v))}
+    except Exception as e:
+        logger.error("[ML] analyze 数据准备失败: %s", e, exc_info=True)
+        return _sanitize({
+            "stock_code": stock_code, "stock_name": stock_name,
+            "error": str(e),
+            "timestamp": datetime.now().isoformat(),
+            "market_regime": {"regime": "unknown", "confidence": 0, "signal": "无"},
+            "ml_prediction": {"direction": "neutral", "score": 0, "confidence": 0},
+            "features_importance": [],
+            "latest_factors": {},
+            "adaptive_weights": {},
+            "fused_decision": {"direction": "neutral", "score": 0, "confidence_level": "low", "primary_driver": "无"},
+            "signal_sources": [],
+        })
 
     # ── 3. 市场状态检测 ──
     detector = RegimeDetector()
@@ -90,7 +216,7 @@ async def ml_analyze(stock_code: str, stock_name: str = ""):
     # ── 取最新特征重要性 ──
     top_features = [{"name": f.feature, "importance": f.importance} for f in ml_pred.top_features[:8]]
 
-    return {
+    return _sanitize({
         "stock_code": stock_code,
         "stock_name": stock_name,
         "timestamp": datetime.now().isoformat(),
@@ -119,10 +245,10 @@ async def ml_analyze(stock_code: str, stock_name: str = ""):
             {"name": s.name, "score": s.score, "weight": s.weight, "detail": s.detail}
             for s in decision.sources
         ],
-    }
+    })
 
 
-@router.get("/ml/compare/{stock_code}")
+@router.get("/compare/{stock_code}")
 async def ml_compare(stock_code: str):
     """返回旧模型(纯LLM) vs 新系统(ML+LLM融合) 的对比指标。"""
     from src.core.ml_predictor.trainer import MLTrainer
@@ -142,7 +268,7 @@ async def ml_compare(stock_code: str):
     trainer = MLTrainer(TrainConfig(n_estimators=50, early_stopping_rounds=0))
     result = trainer.train(df, stock_code)
 
-    return {
+    return _sanitize({
         "stock_code": stock_code,
         "comparison": [
             {
@@ -188,4 +314,84 @@ async def ml_compare(stock_code: str):
                 "explanation": "新：每次预测结果反馈给权重系统，持续进化"
             },
         ]
-    }
+    })
+
+
+@router.get("/risk-metrics")
+async def ml_risk_metrics():
+    """从回测结果计算风险调整指标（夏普/索提诺/最大回撤/卡玛）。"""
+    try:
+        from src.storage import DatabaseManager
+        from src.repositories.backtest_repo import BacktestRepository
+
+        db = DatabaseManager.get_instance()
+        repo = BacktestRepository(db)
+
+        # 获取回测结果
+        results, total = repo.get_results_paginated(
+            code=None, eval_window_days=10,
+            days=None, offset=0, limit=500,
+        )
+        items = results if isinstance(results, list) else []
+
+        if not items:
+            return _sanitize({"error": "未找到整体回测汇总", "count": 0})
+
+        # 计算模拟收益序列
+        import numpy as np
+        returns = []
+        for item in items:
+            # get_results_paginated 返回的是 (BacktestResult, name, ...) 元组
+            br = item[0] if hasattr(item, '__getitem__') and not isinstance(item, dict) else item
+            sr = getattr(br, "simulated_return_pct", None) or getattr(br, "stock_return_pct", None)
+            if sr is not None:
+                returns.append(float(sr))
+
+        if len(returns) < 3:
+            return _sanitize({"error": "回测结果不足（需要至少3条）", "count": len(returns)})
+
+        returns = np.array(returns) / 100.0  # percentage to decimal
+
+        total_return = (np.prod(1 + returns) - 1) * 100
+        annualized_return = np.mean(returns) * 252 * 100  # annualize
+        annualized_vol = np.std(returns, ddof=1) * np.sqrt(252) * 100
+
+        # Risk-free rate (assume 3%)
+        rf_daily = 0.03 / 252
+        excess = returns - rf_daily
+        sharpe = (np.mean(excess) / np.std(returns, ddof=1)) * np.sqrt(252) if np.std(returns, ddof=1) > 0 else 0
+
+        # Sortino
+        downside = returns[returns < 0]
+        sortino = (np.mean(excess) / np.std(downside, ddof=1)) * np.sqrt(252) if len(downside) > 1 and np.std(downside, ddof=1) > 0 else 0
+
+        # Max drawdown
+        cum_returns = np.cumprod(1 + returns)
+        peak = np.maximum.accumulate(cum_returns)
+        drawdown = (cum_returns - peak) / peak
+        max_drawdown = float(np.min(drawdown)) * 100 if len(drawdown) > 0 else 0
+
+        # Calmar
+        calmar = annualized_return / abs(max_drawdown) if max_drawdown != 0 else 0
+
+        # Win/loss
+        wins = returns[returns > 0]
+        losses = returns[returns < 0]
+        win_loss_ratio = np.mean(wins) / abs(np.mean(losses)) if len(wins) > 0 and len(losses) > 0 else 0
+
+        return _sanitize({
+            "total_return_pct": round(total_return, 2),
+            "annualized_return_pct": round(annualized_return, 2),
+            "annualized_volatility_pct": round(annualized_vol, 2),
+            "sharpe_ratio": round(sharpe, 3),
+            "sortino_ratio": round(sortino, 3),
+            "max_drawdown_pct": round(max_drawdown, 2),
+            "calmar_ratio": round(calmar, 3),
+            "win_loss_ratio": round(win_loss_ratio, 2),
+            "avg_win_pct": round(float(np.mean(wins)) * 100, 2) if len(wins) > 0 else 0,
+            "avg_loss_pct": round(float(np.mean(losses)) * 100, 2) if len(losses) > 0 else 0,
+            "count": len(returns),
+        })
+    except Exception as e:
+        logger.error("[ML] risk-metrics 计算失败: %s", e, exc_info=True)
+        return _sanitize({"error": str(e), "count": 0})

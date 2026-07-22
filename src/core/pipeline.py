@@ -80,6 +80,7 @@ from src.services.decision_signal_extractor import extract_and_persist_from_anal
 from src.services.decision_signal_summary import summarize_decision_signal
 from src.enums import ReportType
 from src.stock_analyzer import StockTrendAnalyzer, TrendAnalysisResult
+from src.services.ml_pipeline_service import MLPipelineService, MLAnalysisResult
 from src.core.trading_calendar import (
     build_market_phase_context,
     get_effective_trading_date,
@@ -222,6 +223,7 @@ class StockAnalysisPipeline:
         self.fetcher_manager = DataFetcherManager()
         # 不再单独创建 akshare_fetcher，统一使用 fetcher_manager 获取增强数据
         self.trend_analyzer = StockTrendAnalyzer()  # 技术分析器
+        self.ml_service: Optional[MLPipelineService] = None  # ML 流水线服务（惰性初始化）
         self.analyzer = GeminiAnalyzer(config=self.config, skills=self.analysis_skills)
         self.notifier = NotificationService(source_message=source_message)
         self.market_structure_service = MarketStructureService(fetcher_manager=self.fetcher_manager)
@@ -546,6 +548,31 @@ class StockAnalysisPipeline:
             except Exception as e:
                 logger.warning(f"{stock_name}({code}) 趋势分析失败: {e}", exc_info=True)
 
+            # Step 3.5: ML 预测 + 信号融合（P0：接入主分析链路）
+            ml_analysis_result: Optional[MLAnalysisResult] = None
+            try:
+                if self.ml_service is None:
+                    self.ml_service = MLPipelineService()
+                if historical_bars and len(historical_bars) >= 30:
+                    ml_df = pd.DataFrame([bar.to_dict() for bar in historical_bars])
+                    ml_analysis_result = self.ml_service.analyze(
+                        stock_code=code,
+                        stock_name=stock_name,
+                        kline_df=ml_df,
+                        train_if_missing=True,
+                    )
+                    if ml_analysis_result.is_valid:
+                        logger.info(
+                            f"{stock_name}({code}) ML预测: {ml_analysis_result.ml_prediction.direction} "
+                            f"(conf={ml_analysis_result.ml_prediction.confidence:.2f}), "
+                            f"融合方向={ml_analysis_result.fused_direction}, "
+                            f"市场={ml_analysis_result.market_regime}"
+                        )
+                    else:
+                        logger.info(f"{stock_name}({code}) ML分析: {ml_analysis_result.error or '模型待训练'}")
+            except Exception as e:
+                logger.warning(f"{stock_name}({code}) ML分析链路异常: {e}", exc_info=True)
+
             if use_agent:
                 logger.info(f"{stock_name}({code}) 启用 Agent 模式进行分析")
                 self._emit_progress(58, f"{stock_name}：正在切换 Agent 分析链路")
@@ -671,6 +698,26 @@ class StockAnalysisPipeline:
                 enhanced_context["portfolio_context"] = dict(portfolio_context)
             if isinstance(market_structure_context, dict):
                 enhanced_context["market_structure_context"] = market_structure_context
+
+            # Step 6.5: 注入 ML 分析结果到增强上下文
+            if ml_analysis_result is not None:
+                enhanced_context["ml_analysis"] = ml_analysis_result.to_dict()
+                if ml_analysis_result.is_valid:
+                    ml_pred = ml_analysis_result.ml_prediction
+                    enhanced_context["ml_prediction_summary"] = (
+                        f"ML模型预测: {ml_pred.direction}方向, "
+                        f"置信度{ml_pred.confidence:.1%}, "
+                        f"市场状态: {ml_analysis_result.market_regime}, "
+                        f"融合决策: {ml_analysis_result.fused_direction} "
+                        f"(主驱动: {ml_analysis_result.fused_primary_driver})"
+                    )
+                    # 注入特征重要性供 LLM 参考
+                    if ml_analysis_result.top_features:
+                        top3 = ml_analysis_result.top_features[:3]
+                        features_text = "; ".join(
+                            f"{f['feature']}({f['importance']:.4f})" for f in top3
+                        )
+                        enhanced_context["ml_top_features"] = f"Top3特征重要性: {features_text}"
             
             # Step 7: 调用 AI 分析（传入增强的上下文和新闻）
             (

@@ -1423,7 +1423,7 @@ const SettingsPage: React.FC = () => {
   );
 
   return (
-    <div className="settings-page min-h-full px-4 pb-6 pt-4 md:px-6">
+    <div className="settings-page h-full min-h-0 overflow-y-auto px-4 pb-6 pt-4 md:px-6">
       <div className="surface-card settings-border mb-4 px-4 py-4">
         <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
           <div className="min-w-0">

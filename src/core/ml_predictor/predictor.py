@@ -1,4 +1,4 @@
-"""模型推理 — 加载训练好的模型并生成预测。"""
+"""模型推理 — 加载训练好的模型并生成预测，支持 SHAP 可解释性。"""
 
 import logging
 import pickle
@@ -17,10 +17,11 @@ _MODELS_DIR = Path(__file__).resolve().parent / "models"
 
 
 class MLPredictor:
-    """ML 预测推理器。对单只股票生成价格方向预测。"""
+    """ML 预测推理器。对单只股票生成价格方向预测 + SHAP 可解释性。"""
 
     def __init__(self):
         self._model_cache: dict[str, dict] = {}
+        self._shap_explainer_cache: dict[str, object] = {}
 
     def predict(
         self,
@@ -105,6 +106,116 @@ class MLPredictor:
             prediction_date=date.today(),
             horizon_days=5,
         )
+
+    def explain(
+        self,
+        stock_code: str,
+        kline_df: pd.DataFrame,
+        model_version: Optional[str] = None,
+    ) -> Optional[dict]:
+        """生成 SHAP 可解释性分析。
+
+        Args:
+            stock_code: 股票代码
+            kline_df: 包含 OHLCV 的历史 K 线 DataFrame
+            model_version: 指定模型版本
+
+        Returns:
+            dict with keys:
+                - shap_values: list[{feature, shap_value}] 排序后的 SHAP 值
+                - base_value: float SHAP 基准值
+                - prediction_direction: str 预测方向
+                - prediction_confidence: float 预测置信度
+                - top_positive: list[{feature, shap_value}] 正向贡献 top3
+                - top_negative: list[{feature, shap_value}] 负向贡献 top3
+                或 None（不可用时）
+        """
+        model_data = self._load_model(stock_code, model_version)
+        if model_data is None:
+            return None
+
+        model = model_data["model"]
+        trained_features = model_data["features"]
+
+        X, _, current_features = extract_features(kline_df, horizon_days=0)
+        if len(X) == 0:
+            return None
+
+        X_aligned = np.zeros((X.shape[0], len(trained_features)), dtype=np.float32)
+        feat_map = {f: i for i, f in enumerate(current_features)}
+        for j, f in enumerate(trained_features):
+            if f in feat_map:
+                X_aligned[:, j] = X[:, feat_map[f]]
+
+        # ── SHAP 解释 ──
+        try:
+            import shap
+            from src.core.ml_predictor.trainer import MLTrainer
+
+            model_type = type(model).__module__
+
+            if "xgboost" in model_type:
+                explainer = shap.TreeExplainer(model)
+            elif "sklearn" in model_type and hasattr(model, "estimators_"):
+                explainer = shap.TreeExplainer(model)
+            else:
+                # 使用 KernelExplainer 作为后备（采样）
+                background = X_aligned[:min(50, X_aligned.shape[0])]
+                explainer = shap.KernelExplainer(model.predict_proba, background)
+
+            # 计算 SHAP 值（对最新一期数据）
+            latest_X = X_aligned[-1:]
+            shap_values = explainer.shap_values(latest_X)
+
+            # XGBoost/Sklearn TreeExplainer shap_values shape:
+            #   binary: (n_samples, n_features) 或 [neg_class, pos_class] 各 (n_samples, n_features)
+            if isinstance(shap_values, list):
+                # 多类输出，取 class 1（上涨）
+                shap_arr = np.array(shap_values[1]) if len(shap_values) > 1 else np.array(shap_values[0])
+            else:
+                shap_arr = np.array(shap_values)
+
+            shap_flat = shap_arr.flatten()
+            base_value = float(explainer.expected_value if not isinstance(explainer.expected_value, list)
+                               else explainer.expected_value[1] if len(explainer.expected_value) > 1
+                               else explainer.expected_value[0])
+
+            # 构建 feature→shap_value 映射
+            shap_list = []
+            for i, f_name in enumerate(trained_features):
+                if i < len(shap_flat):
+                    shap_list.append({
+                        "feature": f_name,
+                        "shap_value": round(float(shap_flat[i]), 6),
+                    })
+
+            # 按 shap_value 排序（绝对值大的在前）
+            shap_list.sort(key=lambda x: abs(x["shap_value"]), reverse=True)
+
+            # 正向/负向 top3
+            positive = sorted(
+                [s for s in shap_list if s["shap_value"] > 0],
+                key=lambda x: -x["shap_value"],
+            )[:3]
+            negative = sorted(
+                [s for s in shap_list if s["shap_value"] < 0],
+                key=lambda x: x["shap_value"],
+            )[:3]
+
+            # 获取预测
+            pred = self.predict(stock_code, "", kline_df, model_version)
+
+            return {
+                "shap_values": shap_list,
+                "base_value": base_value,
+                "prediction_direction": pred.direction,
+                "prediction_confidence": pred.confidence,
+                "top_positive": positive,
+                "top_negative": negative,
+            }
+        except Exception as e:
+            logger.warning("[ML] SHAP 解释生成失败: %s", e)
+            return None
 
     def _load_model(self, stock_code: str, version: Optional[str] = None) -> Optional[dict]:
         cache_key = f"{stock_code}_{version or 'latest'}"
